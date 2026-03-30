@@ -30,5 +30,8 @@ module.exports = {
     trackingSyncInterval: process.env.TRACKING_SYNC_INTERVAL || '*/30 * * * *',
     // How many orders to fetch per page
     pageSize: parseInt(process.env.SYNC_PAGE_SIZE || '50', 10),
+    // Only process orders with ID >= this value (0 = no cutoff)
+    // Old store last order #4128 → new store starts at #5942
+    minOrderId: parseInt(process.env.MIN_ORDER_ID || '0', 10),
   },
 };

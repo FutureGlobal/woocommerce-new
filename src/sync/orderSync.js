@@ -60,6 +60,12 @@ function mapToMabang(wcOrder) {
 async function syncOrderToMabang(wcOrder) {
   const orderId = wcOrder.id;
 
+  // Skip if below minimum order ID cutoff
+  if (config.sync.minOrderId > 0 && orderId < config.sync.minOrderId) {
+    logger.debug(`Order ${orderId}: below MIN_ORDER_ID (${config.sync.minOrderId}), skipping`);
+    return 'skipped';
+  }
+
   // Skip if already pushed
   if (getMeta(wcOrder, META_PUSHED) === '1') {
     logger.debug(`Order ${orderId}: already pushed to Mabang, skipping`);
