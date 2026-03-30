@@ -16,9 +16,11 @@ module.exports = {
     clientId: process.env.MABANG_CLIENT_ID || '47777',
     clientSecret: process.env.MABANG_CLIENT_SECRET,
     // supplier_id / supplier_secret: used for warehouse & channel lookups
-    supplierId: process.env.MABANG_SUPPLIER_ID || '1564',
-    warehouseCode: process.env.MABANG_WAREHOUSE_CODE || 'FGSH01',
-    warehouseId: process.env.MABANG_WAREHOUSE_ID || '888709',
+    // NOTE: supplier_id = seller ID (47777), same account as client_id
+    supplierId: process.env.MABANG_SUPPLIER_ID || '47777',
+    // warehouseCode is the numeric ID from getWarehouse (e.g. 11542 = FGSH01)
+    warehouseCode: process.env.MABANG_WAREHOUSE_CODE || '11542',
+    warehouseId: process.env.MABANG_WAREHOUSE_ID || '11542',
     shopName: process.env.MABANG_SHOP_NAME || 'COCOCOMFORT',
     defaultChannelCode: process.env.MABANG_DEFAULT_CHANNEL_CODE || '',
   },
