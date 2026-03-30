@@ -22,7 +22,7 @@ class MabangClient {
   // Auth params used by supplier-facing endpoints (getWarehouse, getChannel)
   get supplierAuth() {
     return {
-      supplier_id: config.mabang.clientId,
+      supplier_id: config.mabang.supplierId,
       supplier_secret: config.mabang.clientSecret,
     };
   }

@@ -12,8 +12,11 @@ module.exports = {
 
   mabang: {
     baseUrl: process.env.MABANG_BASE_URL || 'https://tms-api.mabangerp.com/api/',
-    clientId: process.env.MABANG_CLIENT_ID || '1564',
+    // client_id / client_secret: used for order & SKU operations
+    clientId: process.env.MABANG_CLIENT_ID || '47777',
     clientSecret: process.env.MABANG_CLIENT_SECRET,
+    // supplier_id / supplier_secret: used for warehouse & channel lookups
+    supplierId: process.env.MABANG_SUPPLIER_ID || '1564',
     warehouseCode: process.env.MABANG_WAREHOUSE_CODE || 'FGSH01',
     warehouseId: process.env.MABANG_WAREHOUSE_ID || '888709',
     shopName: process.env.MABANG_SHOP_NAME || 'COCOCOMFORT',
