@@ -4,8 +4,14 @@ const config = require('../config');
 const logger = require('../logger');
 
 const META_PUSHED = '_mabang_order_pushed';
+const META_ORDER_ID = '_mabang_order_id';
 const META_REF_ID = '_mabang_reference_id';
 const META_PUSHED_AT = '_mabang_pushed_at';
+
+// Generate a Mabang order ID: starts with 6, always 10 digits, deterministic from WC order ID
+function buildMabangOrderId(wcOrderId) {
+  return '6' + String(wcOrderId).padStart(9, '0');
+}
 
 function getMeta(order, key) {
   const entry = (order.meta_data || []).find((m) => m.key === key);
@@ -34,7 +40,7 @@ function mapToMabang(wcOrder) {
   const paidTime = rawTime.replace('T', ' ').replace(/\.\d+Z$/, '').replace('Z', '');
 
   return {
-    orderId: String(wcOrder.id),
+    orderId: buildMabangOrderId(wcOrder.id),
     paidTime,
     channelCode: config.mabang.defaultChannelCode,
     countryCode: s.country || b.country || 'NL',
@@ -79,7 +85,8 @@ async function syncOrderToMabang(wcOrder) {
     return 'skipped';
   }
 
-  logger.info(`Order ${orderId}: pushing to Mabang TMS`);
+  const mabangOrderId = payload.orderId;
+  logger.info(`Order ${orderId}: pushing to Mabang TMS as ${mabangOrderId}`);
 
   const result = await mabang.createOrder(payload);
 
@@ -89,16 +96,17 @@ async function syncOrderToMabang(wcOrder) {
       await woocommerce.updateOrder(orderId, {
         meta_data: [
           { key: META_PUSHED, value: '1' },
+          { key: META_ORDER_ID, value: mabangOrderId },
           { key: META_REF_ID, value: String(item.referenceId || '') },
           { key: META_PUSHED_AT, value: new Date().toISOString() },
         ],
       });
       await woocommerce.addOrderNote(
         orderId,
-        `Order pushed to Mabang TMS. Reference ID: ${item.referenceId}`,
+        `Order pushed to Mabang TMS. Mabang Order ID: ${mabangOrderId} | Reference ID: ${item.referenceId}`,
         false
       );
-      logger.info(`Order ${orderId}: pushed successfully (ref: ${item.referenceId})`);
+      logger.info(`Order ${orderId}: pushed successfully as Mabang order ${mabangOrderId} (ref: ${item.referenceId})`);
       return 'pushed';
     } else {
       const msg = (item && item.msg) || result.msg || 'unknown error';

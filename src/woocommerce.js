@@ -37,6 +37,34 @@ class WooCommerceClient {
     return response.data;
   }
 
+  // Find a WooCommerce product (or variation) by SKU
+  async getProductBySku(sku) {
+    // Search simple products and variable product parents
+    const products = await this.client.get('/products', {
+      params: { sku, per_page: 5 },
+    });
+    if (products.data && products.data.length > 0) return products.data[0];
+
+    // Also check variations (variable products)
+    const variations = await this.client.get('/products/variations/all', {
+      params: { sku, per_page: 5 },
+    }).catch(() => ({ data: [] }));
+    if (variations.data && variations.data.length > 0) return variations.data[0];
+
+    return null;
+  }
+
+  // Update stock quantity for a product or variation
+  async updateProductStock(productId, quantity, variationId = null) {
+    const payload = { stock_quantity: quantity, manage_stock: true };
+    if (variationId) {
+      const response = await this.client.put(`/products/${productId}/variations/${variationId}`, payload);
+      return response.data;
+    }
+    const response = await this.client.put(`/products/${productId}`, payload);
+    return response.data;
+  }
+
   // Fetch all "processing" orders with pagination
   async getAllProcessingOrders() {
     const allOrders = [];

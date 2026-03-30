@@ -75,8 +75,8 @@ class MabangClient {
     });
   }
 
-  // 2.2.3 List SKUs in warehouse
-  async getSkus(warehouseCode, page = 1, pageSize = 50) {
+  // 2.2.3 List SKUs in warehouse (pageSize max 500 per Mabang docs)
+  async getSkus(warehouseCode, page = 1, pageSize = 500) {
     return this.post('getSku', {
       ...this.auth,
       data: {

@@ -3,6 +3,7 @@ const router = express.Router();
 const mabang = require('../mabang');
 const { syncPendingOrders } = require('../sync/orderSync');
 const { syncTrackingToWooCommerce } = require('../sync/trackingSync');
+const { syncInventoryToWooCommerce } = require('../sync/inventorySync');
 const logger = require('../logger');
 
 // GET /api/warehouses — list Mabang warehouses for this account
@@ -57,6 +58,19 @@ router.post('/sync/tracking', async (req, res) => {
       await syncTrackingToWooCommerce();
     } catch (err) {
       logger.error(`Manual tracking sync failed: ${err.message}`);
+    }
+  });
+});
+
+// POST /api/sync/inventory — manually trigger inventory sync
+router.post('/sync/inventory', async (req, res) => {
+  logger.info('Manual inventory sync triggered via API');
+  res.json({ message: 'Inventory sync started' });
+  setImmediate(async () => {
+    try {
+      await syncInventoryToWooCommerce();
+    } catch (err) {
+      logger.error(`Manual inventory sync failed: ${err.message}`);
     }
   });
 });

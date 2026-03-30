@@ -35,5 +35,7 @@ module.exports = {
     // Only process orders with ID >= this value (0 = no cutoff)
     // Old store last order #4128 → new store starts at #5942
     minOrderId: parseInt(process.env.MIN_ORDER_ID || '0', 10),
+    // Cron: pull Mabang inventory and update WooCommerce stock every hour
+    inventorySyncInterval: process.env.INVENTORY_SYNC_INTERVAL || '0 * * * *',
   },
 };

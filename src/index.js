@@ -7,6 +7,7 @@ const webhookRoutes = require('./routes/webhook');
 const apiRoutes = require('./routes/api');
 const { syncPendingOrders } = require('./sync/orderSync');
 const { syncTrackingToWooCommerce } = require('./sync/trackingSync');
+const { syncInventoryToWooCommerce } = require('./sync/inventorySync');
 
 const app = express();
 
@@ -74,8 +75,13 @@ app.listen(config.port, async () => {
     syncTrackingToWooCommerce().catch((e) => logger.error(`Scheduled tracking sync error: ${e.message}`));
   });
 
-  logger.info(`Order sync cron: ${config.sync.orderSyncInterval}`);
+  cron.schedule(config.sync.inventorySyncInterval, () => {
+    syncInventoryToWooCommerce().catch((e) => logger.error(`Scheduled inventory sync error: ${e.message}`));
+  });
+
+  logger.info(`Order sync cron:    ${config.sync.orderSyncInterval}`);
   logger.info(`Tracking sync cron: ${config.sync.trackingSyncInterval}`);
+  logger.info(`Inventory sync cron:${config.sync.inventorySyncInterval}`);
 
   // Run both syncs once on startup (after 10 s)
   setTimeout(() => {
@@ -85,4 +91,8 @@ app.listen(config.port, async () => {
   setTimeout(() => {
     syncTrackingToWooCommerce().catch((e) => logger.error(`Startup tracking sync error: ${e.message}`));
   }, 20_000);
+
+  setTimeout(() => {
+    syncInventoryToWooCommerce().catch((e) => logger.error(`Startup inventory sync error: ${e.message}`));
+  }, 35_000);
 });

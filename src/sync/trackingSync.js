@@ -3,6 +3,7 @@ const mabang = require('../mabang');
 const logger = require('../logger');
 
 const META_PUSHED = '_mabang_order_pushed';
+const META_ORDER_ID = '_mabang_order_id';
 const META_TRACKING = '_mabang_tracking_number';
 const META_CHANNEL = '_mabang_channel_code';
 const META_SHIPPED_AT = '_mabang_shipped_at';
@@ -28,7 +29,9 @@ async function syncTrackingForOrder(wcOrder) {
     return 'skipped';
   }
 
-  const result = await mabang.getOrderStatus(orderId);
+  // Use the Mabang order ID stored at push time (6000005942 format); fall back to WC id for older orders
+  const mabangOrderId = getMeta(wcOrder, META_ORDER_ID) || orderId;
+  const result = await mabang.getOrderStatus(mabangOrderId);
 
   if (String(result.code) !== '200' || !result.data || result.data.length === 0) {
     logger.debug(`Order ${orderId}: no Mabang data (${result.msg})`);
