@@ -40,7 +40,8 @@ function mapToMabang(wcOrder) {
   const paidTime = rawTime.replace('T', ' ').replace(/\.\d+Z$/, '').replace('Z', '');
 
   return {
-    orderId: buildMabangOrderId(wcOrder.id),
+    orderId: buildMabangOrderId(wcOrder.id),   // TMS Order No.: 6000005997
+    extOrderId: String(wcOrder.id),             // Platform No.: 5997 (original WC order)
     paidTime,
     channelCode: config.mabang.defaultChannelCode,
     countryCode: s.country || b.country || 'NL',
