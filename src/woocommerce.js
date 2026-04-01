@@ -88,6 +88,45 @@ class WooCommerceClient {
 
     return allOrders;
   }
+
+  // Fetch recently completed orders that still only have first-mile tracking
+  // (trackNumber == trackNumber1 stored in meta — last-mile not yet received)
+  async getCompletedOrdersAwaitingLastMile() {
+    const allOrders = [];
+    let page = 1;
+    const perPage = config.sync.pageSize;
+
+    while (true) {
+      const orders = await this.getOrders({
+        status: 'completed',
+        per_page: perPage,
+        page,
+        orderby: 'date',
+        order: 'desc',
+      });
+
+      if (!orders || orders.length === 0) break;
+
+      for (const o of orders) {
+        const meta = Object.fromEntries((o.meta_data || []).map((m) => [m.key, m.value]));
+        const tracking = meta._mabang_tracking_number || '';
+        const tracking1 = meta._mabang_tracking_number1 || '';
+        const mabangId = meta._mabang_order_id || '';
+        // Include if pushed to Mabang AND tracking equals trackNumber1 (first-mile only)
+        if (mabangId && tracking && tracking === tracking1) {
+          allOrders.push(o);
+        }
+      }
+
+      if (orders.length < perPage) break;
+      page++;
+
+      // Only look back 2 pages (most recent completed orders)
+      if (page > 2) break;
+    }
+
+    return allOrders;
+  }
 }
 
 module.exports = new WooCommerceClient();
