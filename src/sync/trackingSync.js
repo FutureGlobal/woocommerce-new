@@ -52,25 +52,62 @@ async function syncTrackingForOrder(wcOrder) {
 
   const lastMile = mabangOrder.trackNumber || '';
   const internal = mabangOrder.trackNumber1 || '';
+  const channelCode = mabangOrder.channelCode || '';
+  const shippedAt = mabangOrder.expressTime || new Date().toISOString();
 
   // Only sync when last-mile tracking is available.
   // When trackNumber == trackNumber1 (or trackNumber1 is empty), only the
   // first-mile / internal number exists — wait for the last-mile update.
   if (!lastMile || lastMile === internal) {
+    // Fallback: if 4+ days have passed since shipping and still no last-mile,
+    // sync the internal tracking number so the customer gets something.
+    // Both meta keys are set to the same value so the order stays in the
+    // "awaiting last-mile" pool and gets updated again when GFNL arrives.
+    const FALLBACK_DAYS = 4;
+    const shippedDate = shippedAt ? new Date(shippedAt.replace(' ', 'T')) : null;
+    const daysSinceShip = shippedDate ? (Date.now() - shippedDate.getTime()) / (1000 * 60 * 60 * 24) : 0;
+
+    if (internal && daysSinceShip >= FALLBACK_DAYS) {
+      logger.info(`Order ${orderId}: ${daysSinceShip.toFixed(1)}d without last-mile — falling back to internal tracking ${internal}`);
+
+      await woocommerce.updateOrder(orderId, {
+        status: 'completed',
+        meta_data: [
+          { key: META_TRACKING, value: internal },
+          { key: META_TRACKING1, value: internal }, // same → still "awaiting last-mile" for future checks
+          { key: META_CHANNEL, value: channelCode },
+          { key: META_SHIPPED_AT, value: shippedAt },
+        ],
+      });
+
+      await woocommerce.addOrderNote(
+        orderId,
+        `Your order is on its way! Tracking number: ${internal}`,
+        true
+      );
+
+      await woocommerce.addOrderNote(
+        orderId,
+        `Mabang TMS: fallback tracking after ${FALLBACK_DAYS}d. Internal tracking: ${internal} | Channel: ${channelCode} | Shipped at: ${shippedAt}`,
+        false
+      );
+
+      logger.info(`Order ${orderId}: WooCommerce updated with fallback tracking ${internal}`);
+      return 'updated';
+    }
+
     logger.debug(`Order ${orderId}: only first-mile tracking available (${lastMile || 'none'}), waiting for last-mile`);
     return 'pending';
   }
 
   const trackingNumber = lastMile;
-  const channelCode = mabangOrder.channelCode || '';
-  const shippedAt = mabangOrder.expressTime || new Date().toISOString();
 
   // Update WC order: store tracking meta + mark completed
   await woocommerce.updateOrder(orderId, {
     status: 'completed',
     meta_data: [
       { key: META_TRACKING, value: trackingNumber },
-      { key: '_mabang_tracking_number1', value: mabangOrder.trackNumber1 || '' },
+      { key: META_TRACKING1, value: mabangOrder.trackNumber1 || '' },
       { key: META_CHANNEL, value: channelCode },
       { key: META_SHIPPED_AT, value: shippedAt },
     ],
